@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <libwebsockets.h>
+#include <bcm2835.h>
 
+#define LED RPI_GPIO_P1_12
 
 static int callback_http(struct lws *wsi,
                          enum lws_callback_reasons reason, void *user,
@@ -26,8 +28,13 @@ static int callback_dumb_increment(struct lws *wsi,
             // what comes there, lwss will do everything for you. For more info see
             // http://git.warmcat.com/cgi-bin/cgit/lwss/tree/lib/lwss.h#n597
             unsigned char *buf = (unsigned char*) malloc(LWS_SEND_BUFFER_PRE_PADDING + len +
-                                                         LWS_SEND_BUFFER_POST_PADDING);
-            
+                                        LWS_SEND_BUFFER_POST_PADDING);
+                       
+             bcm2835_gpio_fsel(LED,BCM2835_GPIO_FSEL_OUTP);
+            if((char*)in=="on")
+            {bcm2835_gpio_set(LED);}
+            if((char*)in =="off")
+            {bcm2835_gpio_clr(LED);}
             int i;
             
             // pointer to `void *in` holds the incomming request
@@ -81,6 +88,9 @@ static struct lws_protocols protocols[] = {
 };
 
 int main(void) {
+
+        if(!bcm2835_init()) return 1;
+        
     // server url will be http://localhost:9000
     int port = 9000;
     struct lws_context *context;

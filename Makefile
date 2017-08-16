@@ -1,5 +1,5 @@
 websocket: bin/Libsocket.c
-	gcc -o websocket bin/Libwebsocket -L /usr/local/lib/ -l websockets
+	gcc -o websocket bin/Libsocket.c -L /usr/local/lib/ -l websockets bcm2835
 
 clean: 
 	rm ./bin/*.o

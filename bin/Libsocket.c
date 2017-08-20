@@ -29,11 +29,10 @@ static int callback_dumb_increment(struct lws *wsi,
             // http://git.warmcat.com/cgi-bin/cgit/lwss/tree/lib/lwss.h#n597
             unsigned char *buf = (unsigned char*) malloc(LWS_SEND_BUFFER_PRE_PADDING + len +
                                         LWS_SEND_BUFFER_POST_PADDING);
-                       
              bcm2835_gpio_fsel(LED,BCM2835_GPIO_FSEL_OUTP);
-            if((char*)in=="on")
+             if(strcmp((char*)in,"on")==0)
             {bcm2835_gpio_set(LED);}
-            if((char*)in =="off")
+            if(strcmp((char*)in,"off")==0)
             {bcm2835_gpio_clr(LED);}
             int i;
             

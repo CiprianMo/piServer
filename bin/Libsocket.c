@@ -9,7 +9,21 @@ static int callback_http(struct lws *wsi,
                          enum lws_callback_reasons reason, void *user,
                          void *in, size_t len)
 {
-	return 0;
+        switch(reason)
+        {
+                case LWS_CALLBACK_ESTABLISHED:
+                        printf("connection established");
+                case LWS_CALLBACK_CLIENT_WRITEABLE:
+                        printf("client writeable established");
+                case LWS_CALLBACK_HTTP:
+                        char* requeste_uri = (char*) in;
+                        printf("requested URI: %s\n",requested_uri);
+                        break;
+                default:
+                        printf("something bad happend this is default case");
+                        break;
+            }
+        return 0;
 }
 
 

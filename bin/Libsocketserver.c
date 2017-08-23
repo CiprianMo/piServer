@@ -4,7 +4,7 @@
 #include<unistd.h>
 #include<libwebsockets.h>
 
-static int callback_http(struct lws_context *context,
+static int callback_http(
                 struct lws *wsi,
                 enum lws_callback_reasons reason,
                 void *user,
@@ -39,7 +39,6 @@ case LWS_CALLBACK_HTTP:{
                      }
              }
 
-             lws_close_and_free_session(context, wsi, LWS_CLOSE_STATUS_NORMAL);
              break;
      }
 default:

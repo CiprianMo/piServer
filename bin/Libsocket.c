@@ -11,16 +11,16 @@ static int callback_http(struct lws *wsi,
 {
         switch(reason)
         {
-                case LWS_CALLBACK_ESTABLISHED:
-                        printf("connection established");
-                case LWS_CALLBACK_CLIENT_WRITEABLE:
-                        printf("client writeable established");
+              int rs = reason;
+		printf("the reason is %i\n",rs); 
+	        case LWS_CALLBACK_CLIENT_WRITEABLE:
+                        printf("client writeable established\n");
                 case LWS_CALLBACK_HTTP:
-                        char* requeste_uri = (char*) in;
+                       { char* requested_uri = (char*) in;
                         printf("requested URI: %s\n",requested_uri);
-                        break;
+                        break;}
                 default:
-                        printf("something bad happend this is default case");
+                        printf("something bad happend this is default case\n");
                         break;
             }
         return 0;

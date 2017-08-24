@@ -3,7 +3,10 @@
 #include <libwebsockets.h>
 #include <bcm2835.h>
 
-#define LED RPI_GPIO_P1_12
+#define LED RPI_V2_GPIO_P1_37
+#define LAMP RPI_V2_GPIO_P1_40
+#define FAN RPI_V2_GPIO_P1_38
+#define FANHIGH RPI_V2_GPIO_P1_35
 
 static int callback_http(struct lws *wsi,
                          enum lws_callback_reasons reason, void *user,
@@ -11,16 +14,29 @@ static int callback_http(struct lws *wsi,
 {
         switch(reason)
         {
-              int rs = reason;
-		printf("the reason is %i\n",rs); 
-	        case LWS_CALLBACK_CLIENT_WRITEABLE:
-                        printf("client writeable established\n");
-                case LWS_CALLBACK_HTTP:
-                       { char* requested_uri = (char*) in;
-                        printf("requested URI: %s\n",requested_uri);
-                        break;}
+                case LWS_CALLBACK_CLIENT_WRITEABLE:
+                        printf("client writeable established");
+                case LWS_CALLBACK_HTTP: {
+                       char *requested_uri = (char*) in;
+                       printf("requested uri: %s\n", requested_uri);
+                       if(strcmp(requested_uri, "/") == 0)
+                       {
+                            char *universal_response = "Hi there, how are you today ;)";
+                            lws_write(wsi, universal_response, strlen(universal_response), LWS_WRITE_HTTP);
+                       }else{
+                               char cwd[1024];
+                               char *resource_path;
+                               if(getcwd(cwd,sizeof(cwd)) != NULL)
+                               {
+                                    resource_path = malloc(strlen(cwd)+strlen(requested_uri));
+                                    
+                                   sprintf(resource_path, "%s%s", cwd, requested_uri);
+
+                                    lws_serve_http_file(wsi,resource_path,"text/html",NULL,0); 
+                               }
+                            }                
+                                        }
                 default:
-                        printf("something bad happend this is default case\n");
                         break;
             }
         return 0;
@@ -44,9 +60,9 @@ static int callback_dumb_increment(struct lws *wsi,
             unsigned char *buf = (unsigned char*) malloc(LWS_SEND_BUFFER_PRE_PADDING + len +
                                         LWS_SEND_BUFFER_POST_PADDING);
              bcm2835_gpio_fsel(LED,BCM2835_GPIO_FSEL_OUTP);
-             if(strcmp((char*)in,"on")==0)
+             if(strcmp((char*)in,"off")==0)
             {bcm2835_gpio_set(LED);}
-            if(strcmp((char*)in,"off")==0)
+            if(strcmp((char*)in,"on")==0)
             {bcm2835_gpio_clr(LED);}
             int i;
             
@@ -68,7 +84,7 @@ static int callback_dumb_increment(struct lws *wsi,
             // why there's `buf[LWS_SEND_BUFFER_PRE_PADDING]` and how long it is.
             // we know that our response has the same length as request because
             // it's the same message in reverse order.
-            lws_write(wsi, &buf[LWS_SEND_BUFFER_PRE_PADDING], len, LWS_WRITE_TEXT);
+          //  lws_write(wsi, &buf[LWS_SEND_BUFFER_PRE_PADDING], len, LWS_WRITE_TEXT);
             
             // release memory back into the wild
             free(buf);

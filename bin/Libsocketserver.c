@@ -13,36 +13,46 @@ static int callback_http(
 {
         switch(reason)
         {
-case LWS_CALLBACK_CLIENT_WRITEABLE:
-     printf("connection established\n");
+                case LWS_CALLBACK_ESTABLISHED: 
+                        printf("callback established");
+                        break;
+                case LWS_CALLBACK_SERVER_WRITEABLE:
+                        printf("Server writeable\n");
+                        break;
 
-case LWS_CALLBACK_HTTP:{
-             char *requested_uri =(char*) in;
-             printf("requested URI:%s\n", requested_uri);
+                case LWS_CALLBACK_HTTP:{
+                        char *requested_uri =(char*) in;
+                        printf("requested URI:%s\n", requested_uri);
 
-             if(strcmp(requested_uri, "/") == 0){
-                     void *universal_response = "Hello World!";
-                     lws_write(wsi, universal_response,
+                        if(strcmp(requested_uri, "/") == 0){
+                            void *universal_response = "Hello World!";
+                            lws_write(wsi, universal_response,
                                      strlen(universal_response), LWS_WRITE_HTTP);
-                     break;
-             }else{
-                     char cwd[1024];
-                     char *resource_path;
+                        }else{
+                            char cwd[1024];
+                            char *resource_path;
 
-                     if(getcwd(cwd,sizeof(cwd)) != NULL){
+                             if(getcwd(cwd,sizeof(cwd)) != NULL){
                              resource_path = malloc(strlen(cwd)+strlen(requested_uri));
 
                              sprintf(resource_path, "%s%s", cwd, requested_uri);
                              printf("resource_path: %s\n", resource_path);
 
-                             lws_server_http_file(wsi, resource_path, ".html");
+                             lws_serve_http_file(wsi, "hello.html", "text/html", NULL, 0);
                      }
              }
+<<<<<<< HEAD
 
              break;
      }
+=======
+                                       
+             break;}
+                case LWS_CALLBACK_RECEIVE:
+            printf("callbask receive");
+           break; 
+>>>>>>> af255755c4285595e74a9ca808d8b6cbff3a4e31
 default:
-     printf("unhandled callback\n");
      break;
         }
 return 0;

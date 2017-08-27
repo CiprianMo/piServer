@@ -4,9 +4,23 @@
 #include <bcm2835.h>
 
 #define LED RPI_V2_GPIO_P1_37
-#define LAMP RPI_V2_GPIO_P1_40
-#define FAN RPI_V2_GPIO_P1_38
-#define FANHIGH RPI_V2_GPIO_P1_35
+
+
+typedef void (*Operation)(uint8_t pin);
+
+typedef enum Items
+{
+        Lamp = 21,
+        Fan = 20,
+        High = 26,
+        Iron = 19
+}
+
+typedef struct 
+{
+        RPiGPIOPin item;
+        Operation operation;
+} Command;
 
 static int callback_http(struct lws *wsi,
                          enum lws_callback_reasons reason, void *user,
@@ -42,7 +56,14 @@ static int callback_http(struct lws *wsi,
         return 0;
 }
 
+void get_command(char* data, Command *command)
+{
+        char *token = strtok(data, " ");
 
+        command->item = token;
+        token = strtok(NULL," ");
+        command->operation = token;
+}
 
 static int callback_dumb_increment(struct lws *wsi,
                                    enum lws_callback_reasons reason,
@@ -59,6 +80,9 @@ static int callback_dumb_increment(struct lws *wsi,
             // http://git.warmcat.com/cgi-bin/cgit/lwss/tree/lib/lwss.h#n597
             unsigned char *buf = (unsigned char*) malloc(LWS_SEND_BUFFER_PRE_PADDING + len +
                                         LWS_SEND_BUFFER_POST_PADDING);
+             Command command;
+             get_command((char*)in,&command);
+             
              bcm2835_gpio_fsel(LED,BCM2835_GPIO_FSEL_OUTP);
              if(strcmp((char*)in,"off")==0)
             {bcm2835_gpio_set(LED);}
@@ -79,6 +103,9 @@ static int callback_dumb_increment(struct lws *wsi,
             printf("received data: %s, replying: %.*s\n", (char *) in, (int) len,
                    buf + LWS_SEND_BUFFER_PRE_PADDING);
             
+            // send response
+            // just notice that we have to tell where exactly our response starts. That's
+            // why there's `buf[LWS_SEND_BUFFER_PRE_PADDING]` and how long it is.
             // send response
             // just notice that we have to tell where exactly our response starts. That's
             // why there's `buf[LWS_SEND_BUFFER_PRE_PADDING]` and how long it is.
@@ -149,6 +176,3 @@ int main(void) {
     }
     
     lws_context_destroy(context);
-    
-return 0;
-}

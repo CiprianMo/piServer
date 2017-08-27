@@ -9,18 +9,18 @@
                 var websocket = new WebSocket('ws://10.0.0.122:9000',
                                               'dumb-increment-protocol');
                 websocket.onopen = function () {
-                    $('h1').css('color', 'green');
+                    $('h1').css('color', 'green').html("Server Live");
                 };
                 websocket.onerror = function () {
-                    $('h1').css('color', 'red');
+                    $('h1').css('color', 'red').html("Server Down");;
                 };
                 websocket.onmessage = function (message) {
                     console.log(message.data);
                     $('div').append($('<p>', { text: message.data }));
                 };
                 
-                $('button').click(function(e) {
-                    e.preventDefault();
+                $('.command').on('change',function(e) {
+                    alert($(this).attr('name')+" "+$(this).attr('value'));
                     websocket.send($('input').val());
                     $('input').val('');
                 });
@@ -28,10 +28,23 @@
         </script>
         </head>
     <body>
-        <h1>WebSockets test</h1>
+        <h1>Server</h1>
         <form>
-            <input type="text" />
-            <button>Send</button>
+		Lamp:
+            <input class ="command" type="radio" name="Lamp" value="Off" checked="checked"/> Off
+	    <input class ="command" type="radio" name="Lamp" value="On"/> On
+<br/>
+		Fan:
+            <input class ="command" type="radio" name="Fan" value="Off" checked="checked"/> Off
+	    <input class ="command" type="radio" name="Fan" value="On"/> On
+Speed:
+	    <input class ="command" type="radio" name="High" value="Off"/> High
+	    <input class ="command" type="radio" name="High" value="On" checked="checked"/> Low
+<br/>
+		Iron:
+            <input class ="command" type="radio" name="Iron" value="Off" checked="checked"/> Off
+	    <input class ="command" type="radio" name="Iron" value="On"/> On
+<br/>
         </form>
         <div></div>
     </body>

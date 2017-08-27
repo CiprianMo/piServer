@@ -1,3 +1,4 @@
+#include <hashmap.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <libwebsockets.h>
@@ -18,9 +19,11 @@ typedef enum Items
 
 typedef struct 
 {
-        RPiGPIOPin item;
-        Operation operation;
+        char* item;
+        char* operation;
 } Command;
+
+static Hashmap *hashMap = Hash_create(NULL,NULL);
 
 static int callback_http(struct lws *wsi,
                          enum lws_callback_reasons reason, void *user,
@@ -82,13 +85,17 @@ static int callback_dumb_increment(struct lws *wsi,
                                         LWS_SEND_BUFFER_POST_PADDING);
              Command command;
              get_command((char*)in,&command);
+            
+            uint8_t * pin = Hashmap_get(hashMap,command.item);
+
+            Operation opr = Hashmap_get(hashMap,command.operation); 
              
+
              bcm2835_gpio_fsel(LED,BCM2835_GPIO_FSEL_OUTP);
-             if(strcmp((char*)in,"off")==0)
-            {bcm2835_gpio_set(LED);}
-            if(strcmp((char*)in,"on")==0)
-            {bcm2835_gpio_clr(LED);}
-            int i;
+            
+             opr(pin);
+
+             int i;
             
             // pointer to `void *in` holds the incomming request
             // we're just going to put it in reverse order and put it in `buf` with
@@ -146,7 +153,12 @@ static struct lws_protocols protocols[] = {
 int main(void) {
 
         if(!bcm2835_init()) return 1;
-        
+        int suc = Hashmap_set(hashMap,"Fan",20);
+        suc = Hashmap_set(hashMap,"Lamp",20);
+        suc = Hashmap_set(hashMap,"High",26);
+        suc = Hashmap_set(hashMap,"Iron",19);
+        suc = Hashmap_set(hashMap,"Off", bcm2835_gpio_clr );
+        suc = Hashmap_set(hashMap,"On", bcm2835_gpio_set );
     // server url will be http://localhost:9000
     int port = 9000;
     struct lws_context *context;

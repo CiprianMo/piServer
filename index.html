@@ -22,7 +22,6 @@
                 $('.command').on('change',function(e) {
                     alert($(this).attr('name')+" "+$(this).attr('value'));
                     websocket.send($(this).attr('name')+" "+$(this).attr('value'));
-                    $('input').val('');
                 });
             });
         </script>
@@ -38,8 +37,8 @@
             <input class ="command" type="radio" name="Fan" value="Off" checked="checked"/> Off
 	    <input class ="command" type="radio" name="Fan" value="On"/> On
 Speed:
-	    <input class ="command" type="radio" name="High" value="Off"/> High
-	    <input class ="command" type="radio" name="High" value="On" checked="checked"/> Low
+	    <input class ="command" type="radio" name="High" value="On"/> High
+	    <input class ="command" type="radio" name="High" value="Off" checked="checked"/> Low
 <br/>
 		Iron:
             <input class ="command" type="radio" name="Iron" value="Off" checked="checked"/> Off

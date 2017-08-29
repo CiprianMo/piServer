@@ -71,9 +71,9 @@ void get_command(char* data, Command *command)
 Operation get_Function(Command *command)
 {
     if(strcmp(command->operation,"Off")==0)
-                    return &bcm2835_gpio_clr;
+                    return &bcm2835_gpio_set;
     else
-        return &bcm2835_gpio_set;
+        return &bcm2835_gpio_clr;
 }
 
 uint8_t get_Pin(Command *command)
@@ -83,10 +83,10 @@ uint8_t get_Pin(Command *command)
     else if(strcmp(command->item,"Lamp")==0)
             return 21;
     else if(strcmp(command->item,"High")==0)
-            return 26;
-    else if(strcmp(command->item,"Iron")==0)
             return 19;
-
+    else 
+            return 26;
+}
 static int callback_dumb_increment(struct lws *wsi,
                                    enum lws_callback_reasons reason,
                                    void *user, void *in, size_t len)
@@ -105,10 +105,10 @@ static int callback_dumb_increment(struct lws *wsi,
              Command command;
              get_command((char*)in,&command);
             
-            uint8_t pin = get_Pin(command);
+            uint8_t pin = get_Pin(&command);
 
 
-            Operation opr = get_Function(command); 
+            Operation opr = get_Function(&command); 
              
 
              bcm2835_gpio_fsel(21,BCM2835_GPIO_FSEL_OUTP);
@@ -205,6 +205,5 @@ int main(void) {
     }
     
     lws_context_destroy(context);
-Hashmap_destroy(hashMap);
 return 0;
 }

@@ -9,13 +9,13 @@
 
 typedef void (*Operation)(uint8_t pin);
 
-typedef enum Items
+typedef enum 
 {
         Lamp = 21,
         Fan = 20,
         High = 26,
         Iron = 19
-}
+} Pins;
 
 typedef struct 
 {
@@ -23,7 +23,7 @@ typedef struct
         char* operation;
 } Command;
 
-static Hashmap *hashMap = Hash_create(NULL,NULL);
+static Hashmap *hashMap;
 
 static int callback_http(struct lws *wsi,
                          enum lws_callback_reasons reason, void *user,
@@ -93,7 +93,7 @@ static int callback_dumb_increment(struct lws *wsi,
 
              bcm2835_gpio_fsel(LED,BCM2835_GPIO_FSEL_OUTP);
             
-             opr(pin);
+             opr(*pin);
 
              int i;
             
@@ -152,13 +152,15 @@ static struct lws_protocols protocols[] = {
 
 int main(void) {
 
+        hashMap = Hashmap_create(NULL,NULL);
+
         if(!bcm2835_init()) return 1;
-        int suc = Hashmap_set(hashMap,"Fan",20);
-        suc = Hashmap_set(hashMap,"Lamp",20);
-        suc = Hashmap_set(hashMap,"High",26);
-        suc = Hashmap_set(hashMap,"Iron",19);
-        suc = Hashmap_set(hashMap,"Off", bcm2835_gpio_clr );
-        suc = Hashmap_set(hashMap,"On", bcm2835_gpio_set );
+        int suc = Hashmap_set(hashMap,"Fan","20");
+        suc = Hashmap_set(hashMap,"Lamp","21");
+        suc = Hashmap_set(hashMap,"High","26");
+        suc = Hashmap_set(hashMap,"Iron","19");
+        suc = Hashmap_set(hashMap,"Off", "bcm2835_gpio_clr" );
+        suc = Hashmap_set(hashMap,"On","bcm2835_gpio_set" );
     // server url will be http://localhost:9000
     int port = 9000;
     struct lws_context *context;
@@ -188,3 +190,6 @@ int main(void) {
     }
     
     lws_context_destroy(context);
+Hashmap_destroy(hashMap);
+return 0;
+}

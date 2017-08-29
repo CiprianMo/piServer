@@ -15,8 +15,8 @@ static int default_compare(void *a, void *b)
  */
 static uint32_t default_hash(void *a)
 {
-    size_t len = blength((bstring) a);
-    char *key = bdata((bstring) a);
+    size_t len = blength(bfromcstr((char*) a));
+    char *key = bdata(bfromcstr((char*) a));
     uint32_t hash = 0;
     uint32_t i = 0;
 

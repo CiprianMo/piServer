@@ -21,7 +21,7 @@
                 
                 $('.command').on('change',function(e) {
                     alert($(this).attr('name')+" "+$(this).attr('value'));
-                    websocket.send($('input').val());
+                    websocket.send($(this).attr('name')+" "+$(this).attr('value'));
                     $('input').val('');
                 });
             });

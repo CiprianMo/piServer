@@ -23,7 +23,6 @@ typedef struct
         char* operation;
 } Command;
 
-static Hashmap *hashMap;
 
 static int callback_http(struct lws *wsi,
                          enum lws_callback_reasons reason, void *user,
@@ -68,6 +67,26 @@ void get_command(char* data, Command *command)
         command->operation = token;
 }
 
+
+Operation get_Function(Command *command)
+{
+    if(strcmp(command->operation,"Off")==0)
+                    return &bcm2835_gpio_clr;
+    else
+        return &bcm2835_gpio_set;
+}
+
+uint8_t get_Pin(Command *command)
+{
+    if(strcmp(command->item,"Fan")==0)
+            return 20;
+    else if(strcmp(command->item,"Lamp")==0)
+            return 21;
+    else if(strcmp(command->item,"High")==0)
+            return 26;
+    else if(strcmp(command->item,"Iron")==0)
+            return 19;
+
 static int callback_dumb_increment(struct lws *wsi,
                                    enum lws_callback_reasons reason,
                                    void *user, void *in, size_t len)
@@ -86,14 +105,17 @@ static int callback_dumb_increment(struct lws *wsi,
              Command command;
              get_command((char*)in,&command);
             
-            uint8_t * pin = Hashmap_get(hashMap,command.item);
+            uint8_t pin = get_Pin(command);
 
-            Operation opr = Hashmap_get(hashMap,command.operation); 
+
+            Operation opr = get_Function(command); 
              
 
-             bcm2835_gpio_fsel(LED,BCM2835_GPIO_FSEL_OUTP);
-            
-             opr(*pin);
+             bcm2835_gpio_fsel(21,BCM2835_GPIO_FSEL_OUTP);
+             bcm2835_gpio_fsel(20,BCM2835_GPIO_FSEL_OUTP);
+             bcm2835_gpio_fsel(26,BCM2835_GPIO_FSEL_OUTP);
+             bcm2835_gpio_fsel(19,BCM2835_GPIO_FSEL_OUTP);
+             opr(pin);
 
              int i;
             
@@ -152,15 +174,8 @@ static struct lws_protocols protocols[] = {
 
 int main(void) {
 
-        hashMap = Hashmap_create(NULL,NULL);
 
         if(!bcm2835_init()) return 1;
-        int suc = Hashmap_set(hashMap,"Fan","20");
-        suc = Hashmap_set(hashMap,"Lamp","21");
-        suc = Hashmap_set(hashMap,"High","26");
-        suc = Hashmap_set(hashMap,"Iron","19");
-        suc = Hashmap_set(hashMap,"Off", "bcm2835_gpio_clr" );
-        suc = Hashmap_set(hashMap,"On","bcm2835_gpio_set" );
     // server url will be http://localhost:9000
     int port = 9000;
     struct lws_context *context;

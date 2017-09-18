@@ -3,11 +3,12 @@
 #include <stdlib.h>
 #include <libwebsockets.h>
 #include <bcm2835.h>
-
+#include <curl/curl.h>
 #define LED RPI_V2_GPIO_P1_37
 
 
 typedef void (*Operation)(uint8_t pin);
+
 
 typedef enum 
 {
@@ -67,7 +68,6 @@ void get_command(char* data, Command *command)
         command->operation = token;
 }
 
-
 Operation get_Function(Command *command)
 {
     if(strcmp(command->operation,"Off")==0)
@@ -87,6 +87,16 @@ uint8_t get_Pin(Command *command)
     else 
             return 26;
 }
+
+void get_updates(unsigned char* status)
+{
+    uint8_t fan = bcm2835_gpio_lev((uint8_t) Fan);
+    uint8_t lamp = bcm2835_gpio_lev((uint8_t) Lamp);
+    uint8_t high = bcm2835_gpio_lev((uint8_t) High);
+    uint8_t iron = bcm2835_gpio_lev((uint8_t) Iron);
+    sprintf(status,"Fan %i,Lamp %i,High %i,Iron %i", fan,lamp,high,iron);
+}
+
 static int callback_dumb_increment(struct lws *wsi,
                                    enum lws_callback_reasons reason,
                                    void *user, void *in, size_t len)
@@ -100,37 +110,50 @@ static int callback_dumb_increment(struct lws *wsi,
             // it has to have some pre and post padding. You don't need to care
             // what comes there, lwss will do everything for you. For more info see
             // http://git.warmcat.com/cgi-bin/cgit/lwss/tree/lib/lwss.h#n597
-            unsigned char *buf = (unsigned char*) malloc(LWS_SEND_BUFFER_PRE_PADDING + len +
-                                        LWS_SEND_BUFFER_POST_PADDING);
-             Command command;
-             get_command((char*)in,&command);
-            
-            uint8_t pin = get_Pin(&command);
-
-
-            Operation opr = get_Function(&command); 
              
-
              bcm2835_gpio_fsel(21,BCM2835_GPIO_FSEL_OUTP);
              bcm2835_gpio_fsel(20,BCM2835_GPIO_FSEL_OUTP);
              bcm2835_gpio_fsel(26,BCM2835_GPIO_FSEL_OUTP);
              bcm2835_gpio_fsel(19,BCM2835_GPIO_FSEL_OUTP);
-             opr(pin);
+             //unsigned char *buf = (unsigned char*) malloc(LWS_SEND_BUFFER_PRE_PADDING + len + LWS_SEND_BUFFER_POST_PADDING);
+             
+            Command command;
+             get_command((unsigned char*)in,&command);
+            if(strcmp(command.item,"update")==0)
+            {
+                    
+               unsigned char* updates[100];
+               get_updates(updates);
+               lws_write(wsi, updates, strlen(updates), LWS_WRITE_TEXT);
+            }
+            else if(strcmp(command.item,"up")==0 || strcmp(command.item,"down")==0){
+                    
+            CURL *curl;
+            curl = curl_easy_init();
+                    char url[50];
+                    sprintf("10.0.0.7/%s",command.item);
+            curl_easy_setopt(curl,CURLOPT_URL,url);
+            curl_easy_perform(curl);
+            }
+            else
+            {
+            
+            uint8_t pin = get_Pin(&command);
 
+            Operation opr = get_Function(&command); 
+             opr(pin);
+            }
+
+                         
              int i;
             
             // pointer to `void *in` holds the incomming request
             // we're just going to put it in reverse order and put it in `buf` with
             // correct offset. `len` holds length of the request.
-            for (i=0; i < len; i++) {
-                buf[LWS_SEND_BUFFER_PRE_PADDING + (len - 1) - i ] = ((char *) in)[i];
-            }
             
             // log what we recieved and what we're going to send as a response.
             // that disco syntax `%.*s` is used to print just a part of our buffer
             // http://stackoverflow.com/questions/5189071/print-part-of-char-array
-            printf("received data: %s, replying: %.*s\n", (char *) in, (int) len,
-                   buf + LWS_SEND_BUFFER_PRE_PADDING);
             
             // send response
             // just notice that we have to tell where exactly our response starts. That's
@@ -140,10 +163,8 @@ static int callback_dumb_increment(struct lws *wsi,
             // why there's `buf[LWS_SEND_BUFFER_PRE_PADDING]` and how long it is.
             // we know that our response has the same length as request because
             // it's the same message in reverse order.
-          //  lws_write(wsi, &buf[LWS_SEND_BUFFER_PRE_PADDING], len, LWS_WRITE_TEXT);
-            
+                       
             // release memory back into the wild
-            free(buf);
             break;
         }
         default:
@@ -172,12 +193,12 @@ static struct lws_protocols protocols[] = {
     }
 };
 
-int main(void) {
+int main(int argc, char ** argv) {
 
-
+    
         if(!bcm2835_init()) return 1;
     // server url will be http://localhost:9000
-    int port = 9000;
+    int port =9000;
     struct lws_context *context;
     struct lws_context_creation_info context_info =
     {

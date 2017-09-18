@@ -10,19 +10,26 @@
                                               'dumb-increment-protocol');
                 websocket.onopen = function () {
                     $('h1').css('color', 'green').html("Server Live");
+                    websocket.send("update");
                 };
                 websocket.onerror = function () {
                     $('h1').css('color', 'red').html("Server Down");;
                 };
                 websocket.onmessage = function (message) {
                     console.log(message.data);
-                    $('div').append($('<p>', { text: message.data }));
+                    var values = message.data.split(',');
+                    jQuery.each(values,function(i,val){
+                        var item = val.split(' ');
+                        $('input:radio[name = '+item[0]+']')[item[1]].checked = true; 
+                    });
                 };
                 
                 $('.command').on('change',function(e) {
-                    alert($(this).attr('name')+" "+$(this).attr('value'));
                     websocket.send($(this).attr('name')+" "+$(this).attr('value'));
                 });
+                $("#up").click(function(){websocket.send("up")});
+                $("#down").click(function(){websocket.send("down")});
+                    
             });
         </script>
         </head>
@@ -30,21 +37,25 @@
         <h1>Server</h1>
         <form>
 		Lamp:
-            <input class ="command" type="radio" name="Lamp" value="Off" checked="checked"/> Off
-	    <input class ="command" type="radio" name="Lamp" value="On"/> On
+            <input class ="command" type="radio" name="Lamp" value="On"/> On
+	    <input class ="command" type="radio" name="Lamp" value="Off"/> Off
 <br/>
 		Fan:
-            <input class ="command" type="radio" name="Fan" value="Off" checked="checked"/> Off
-	    <input class ="command" type="radio" name="Fan" value="On"/> On
+            <input class ="command" type="radio" name="Fan" value="On"/> On
+	    <input class ="command" type="radio" name="Fan" value="Off"/> Off
 Speed:
 	    <input class ="command" type="radio" name="High" value="On"/> High
-	    <input class ="command" type="radio" name="High" value="Off" checked="checked"/> Low
+	    <input class ="command" type="radio" name="High" value="Off"/> Low
 <br/>
 		Iron:
-            <input class ="command" type="radio" name="Iron" value="Off" checked="checked"/> Off
-	    <input class ="command" type="radio" name="Iron" value="On"/> On
+            <input class ="command" type="radio" name="Iron" value="On" /> On
+	    <input class ="command" type="radio" name="Iron" value="Off"/> Off
 <br/>
         </form>
+
+        Volume:
+        <button id="up">+</button>
+        <button id="down">-</button>
         <div></div>
     </body>
 </html>
